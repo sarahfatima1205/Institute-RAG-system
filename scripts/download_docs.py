@@ -12,8 +12,9 @@ URLS = {
     "regulations_2020_onwards.pdf": "https://iitj.ac.in/PageImages/Gallery/03-2025/bioreg-638769690932905139.pdf",
     "academic_calendar_2026_27.pdf": "https://iitj.ac.in/PageImages/Gallery/06-2026/Academic-Calendar-AY-2026-27-639178076336417495.pdf",
     "academic_regulations_page.html": "https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations",
-    # TODO(team): open the Academic-Regulations page, right-click the links "Amendment in the Attendance Policy"
-    # and "Amendment in the Examination Policy" (AY 2024-25) and add their PDF URLs here.
+    "rules_and_regulations_for_ms.pdf": "https://iitj.ac.in/PageImages/Gallery/03-2025/6_2024-04-17-661f605b54457-1713332315.pdf",
+    "curricilum_btech_cse.pdf": "https://iitj.ac.in/PageImages/Gallery/07-2025/Curriculum-BTech-CSE.pdf",
+    "cse_courses_details.pdf": "https://iitj.ac.in/PageImages/Gallery/07-2025/CSE-Courses-Details.pdf"
 }
 
 if __name__ == "__main__":
