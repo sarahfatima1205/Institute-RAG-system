@@ -1,0 +1,15 @@
+course_code,course_name,department,level,course_type,credits,ltp,slot,venue,instructor,instructor_email,semester
+AVL7010,Autonomous Systems,AV,700,elective,3,3-0-0,D,LH-102,Dr. Instructor Alpha,instructor.alpha@example.iitj.test,2026-27-I
+CSL7570,Advanced Topics in Machine Learning,CS,700,elective,3,3-0-0,E,LH-201,Dr. Instructor Beta,instructor.beta@example.iitj.test,2026-27-I
+CSL3010,Operating Systems,CS,300,core,4,3-0-2,B,LH-301,Dr. Instructor Gamma,instructor.gamma@example.iitj.test,2026-27-I
+CSL4020,Compiler Design,CS,400,elective,3,3-0-0,C,LH-204,Dr. Instructor Delta,instructor.delta@example.iitj.test,2026-27-I
+EEL3030,Digital Signal Processing,EE,300,core,3,3-0-0,A,LH-105,Dr. Instructor Epsilon,instructor.epsilon@example.iitj.test,2026-27-I
+MAL1010,Linear Algebra and Calculus,MA,100,core,4,3-1-0,F,LH-001,Dr. Instructor Zeta,instructor.zeta@example.iitj.test,2026-27-I
+HSL4010,Philosophy of Technology,HS,400,elective,3,3-0-0,G,LH-110,Dr. Instructor Eta,instructor.eta@example.iitj.test,2026-27-I
+HSL4020,Indian Political Thought,HS,400,elective,3,3-0-0,F,LH-111,Dr. Instructor Theta,instructor.theta@example.iitj.test,2026-27-I
+HSL4030,Economics of Development,HS,400,elective,3,3-0-0,E,LH-112,Dr. Instructor Iota,instructor.iota@example.iitj.test,2026-27-I
+HSL3010,Introduction to Sociology,HS,300,elective,3,3-0-0,D,LH-113,Dr. Instructor Kappa,instructor.kappa@example.iitj.test,2026-27-I
+MEL3020,Heat Transfer,ME,300,core,3,3-0-0,C,LH-205,Dr. Instructor Lambda,instructor.lambda@example.iitj.test,2026-27-I
+BBL4010,Systems Biology,BB,400,elective,3,3-0-0,B,LH-206,Dr. Instructor Mu,instructor.mu@example.iitj.test,2026-27-I
+PHL1010,Physics I,PH,100,core,3,3-0-0,A,LH-002,Dr. Instructor Nu,instructor.nu@example.iitj.test,2026-27-I
+OAL2010,Open Elective: Design Thinking,OA,200,open,2,2-0-0,H,LH-003,Dr. Instructor Xi,instructor.xi@example.iitj.test,2026-27-I
