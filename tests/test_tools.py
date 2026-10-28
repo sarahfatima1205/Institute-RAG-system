@@ -1,13 +1,20 @@
 """Offline tests (no Ollama needed):  EMBED_BACKEND=hash python -m pytest tests -q"""
 import os
 os.environ["EMBED_BACKEND"] = "hash"
-import sys, pathlib
+import sys, pathlib, shutil, tempfile
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[1]))
 import config, rag, tools
 
 
 def setup_module(_):
-    assert rag.ingest() > 20
+    # fixed 2-doc corpus in a temp Chroma dir: tests stay stable as data/docs grows
+    # and never overwrite the real (Ollama-embedded) chroma_db/
+    tmp = pathlib.Path(tempfile.mkdtemp())
+    config.CHROMA_DIR = tmp / "chroma_db"
+    (tmp / "docs").mkdir()
+    for name in ("ug_regulations_2019.md", "pg_regulations_2019.md"):
+        shutil.copy(config.DOCS_DIR / name, tmp / "docs")
+    assert rag.ingest(tmp / "docs") > 20
 
 
 def test_rag_attendance():

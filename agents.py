@@ -1,9 +1,13 @@
 """Single-agent and multi-agent (orchestrator + 3 specialists) Academic Helpdesk using Google ADK."""
+import litellm
 from google.adk.agents import Agent
 from google.adk.models.lite_llm import LiteLlm
 
 import config
 import tools
+
+# LiteLLM's internal GPT-5 check prints a harmless "Provider List" banner for every ollama_chat call
+litellm.suppress_debug_info = True
 
 CITE_RULES = """
 CITATION RULES (mandatory):
@@ -25,7 +29,12 @@ REFUSAL RULES (mandatory):
 
 
 def _model(name: str | None = None):
-    return LiteLlm(model=name or config.CHAT_MODEL)
+    name = name or config.CHAT_MODEL
+    extra = {}
+    if "qwen3" in name.lower():
+        # newer Ollama ignores "/no_think" in the prompt; this sends think=false in the request instead
+        extra["reasoning_effort"] = "none"
+    return LiteLlm(model=name, num_ctx=config.NUM_CTX, **extra)
 
 
 def _suffix(name: str | None) -> str:

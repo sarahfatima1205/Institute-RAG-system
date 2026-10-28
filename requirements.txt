@@ -3,3 +3,5 @@ litellm
 ollama
 chromadb
 pypdf
+mcp            # litellm imports it on the chat path
+pytest

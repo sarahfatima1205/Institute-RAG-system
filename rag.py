@@ -1,4 +1,5 @@
 """RAG pipeline: load docs -> chunk (section aware) -> embed (Ollama) -> ChromaDB."""
+import csv
 import hashlib
 import math
 import re
@@ -53,9 +54,19 @@ class _Strip(HTMLParser):
     def __init__(self):
         super().__init__()
         self.parts: list[str] = []
+        self.skip = 0  # inside <script>/<style>
+
+    def handle_starttag(self, tag, attrs):
+        if tag in ("script", "style"):
+            self.skip += 1
+
+    def handle_endtag(self, tag):
+        if tag in ("script", "style") and self.skip:
+            self.skip -= 1
 
     def handle_data(self, d):
-        self.parts.append(d)
+        if not self.skip:
+            self.parts.append(d)
 
 
 def _sections_from_text(text: str) -> list[tuple[str, str]]:
@@ -73,10 +84,23 @@ def _sections_from_text(text: str) -> list[tuple[str, str]]:
     return sections
 
 
+def _manifest_row(name: str) -> dict:
+    """source_url / effective_date for files without front matter (PDF, HTML), from data/docs_manifest.csv."""
+    path = config.DOCS_DIR.parent / "docs_manifest.csv"
+    if not path.exists():
+        return {}
+    with open(path, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row["file"] == name:
+                return {k: row[k] for k in ("source_url", "effective_date") if row.get(k)}
+    return {}
+
+
 def load_document(path: Path) -> list[tuple[str, str, dict]]:
     """Return [(section_label, text, doc_meta)] for one file."""
     suf = path.suffix.lower()
     meta = {"title": path.stem.replace("_", " "), "source_url": "", "effective_date": ""}
+    meta.update(_manifest_row(path.name))
     if suf in (".md", ".txt"):
         fm, body = _parse_front_matter(path.read_text(encoding="utf-8", errors="ignore"))
         meta.update(fm)

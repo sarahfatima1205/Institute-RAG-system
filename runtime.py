@@ -30,7 +30,7 @@ class Helpdesk:
             for fr in ev.get_function_responses() or []:
                 results.append({"tool": fr.name, "response": fr.response})
             if ev.is_final_response() and ev.content and ev.content.parts:
-                answer = "".join(p.text or "" for p in ev.content.parts)
+                answer = "".join(p.text or "" for p in ev.content.parts if not p.thought)
         return {"answer": answer.strip(), "tool_calls": calls, "tool_results": results, "agents": agents, "session": sid}
 
     def ask_sync(self, question: str, session_id: str | None = None) -> dict:
