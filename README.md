@@ -35,7 +35,9 @@ python rag.py                       # build/rebuild the vector store; re-run aft
 - Qwen3 "thinking" is switched off per request (`reasoning_effort="none"` → Ollama `think: false`).
 - iitj.ac.in does not send its intermediate TLS certificate; `download_docs.py` adds it from
   `scripts/sectigo_ov_r36_intermediate.pem` (verification stays on).
-- Check Ollama is running: `curl localhost:11434/api/version` (snap install: `sudo snap start ollama`).
+- Check Ollama is running: `curl localhost:11434/api/version`. Snap install: `sudo snap start ollama` / `sudo snap stop ollama`
+  (to stop it auto-starting at boot: `sudo snap stop --disable ollama`). Use the snap service, not a plain
+  `ollama serve`, so the models pulled by the service are found.
 
 ## Run
 ```bash
@@ -48,7 +50,7 @@ On CPU an answer takes ~20–120 s; the first one is slower while the model load
 
 ## Tests and evaluation
 ```bash
-EMBED_BACKEND=hash python -m pytest tests -q   # offline (no Ollama), 16 tests, uses a temp index
+EMBED_BACKEND=hash python -m pytest tests -q   # offline (no Ollama), 17 tests, uses a temp index
 python eval/evaluate.py --mode multi  --model ollama_chat/qwen3:8b    --runs 3
 python eval/evaluate.py --mode single --model ollama_chat/llama3.1:8b --runs 3
 python eval/evaluate.py --compare results/multi_qwen3-8b.jsonl results/single_llama3.1-8b.jsonl
