@@ -50,7 +50,7 @@ def search_policy_documents(query: str) -> dict:
         query: a self-contained search query, e.g. "attendance requirement major exam".
 
     Returns:
-        dict with status 'ok' and a list of passages (each with a citation string),
+        dict with status 'ok' and a list of passages (each with a ready-to-copy citation),
         or status 'no_relevant_documents' if nothing relevant exists.
     """
     hits = rag.search(query)
@@ -63,11 +63,15 @@ def search_policy_documents(query: str) -> dict:
         "status": "ok",
         "results": [
             {
-                "citation": f"{h['doc']} — {h['section']}",
+                "citation": f"(Source: {h['doc']}, {h['section']})",
                 "effective_date": h["effective_date"],
                 "source_url": h["source_url"],
-                "relevance": h["score"],
                 "text": h["text"],
+                **(
+                    {"note": f"CURRENT RULE: this amendment replaces the older rule in {', '.join(h['replaces'])} "
+                             "(those passages were withheld). Answer from this passage."}
+                    if h.get("replaces") else {}
+                ),
             }
             for h in hits
         ],
@@ -169,9 +173,9 @@ _TEMPLATES = {
 }
 
 _POLICY_NOTES = {
-    "sick_leave": "Medical leave: up to 10 days per semester; apply to Convener DUGC with a medical certificate (ug_regulations_2019.md — 15.2 Short Leave).",
-    "leave": "Non-medical leave: up to 5 days per semester with prior approval (ug_regulations_2019.md — 15.2 Short Leave).",
-    "makeup_exam": "Apply to Dean (Academics) through the instructor within ten days of the missed exam, with documents (ug_regulations_2019.md — 8. Make-up Examinations).",
+    "sick_leave": "Medical leave: up to 10 days per semester; apply to Convener DUGC with a medical certificate (Source: ug_regulations_2019.md, 15.2 Short Leave).",
+    "leave": "Non-medical leave: up to 5 days per semester with prior approval (Source: ug_regulations_2019.md, 15.2 Short Leave).",
+    "makeup_exam": "Apply to Dean (Academics) through the instructor within ten days of the missed exam, with documents (Source: ug_regulations_2019.md, 8 Make-up Examinations).",
 }
 
 

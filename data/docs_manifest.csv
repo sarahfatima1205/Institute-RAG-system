@@ -1,12 +1,15 @@
 file,category,source_url,effective_date,status,owner
-ug_regulations_2019.md,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,2019-07,working-copy (replace with official PDF),Member 1
-pg_regulations_2019.md,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,2019-07,working-copy (replace with official PDF),Member 1
+ug_regulations_2019.md,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,2019-07,condensed copy of academic_regulations_page.html (key numbers checked against official sources),Member 1
+pg_regulations_2019.md,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,2019-07,condensed copy of academic_regulations_page.html (key numbers checked against official sources),Member 1
 btech_regulations_2018.pdf,rules,https://iitj.ac.in/PageImages/Gallery/04-2025/BTech_Regulations_Latest_21July2018.pdf,2018-07-21,official (B.Tech students enrolled from July 2014; revised 21 Jul 2018),Member 1
 regulations_2020_onwards.pdf,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/bioreg-638769690932905139.pdf,2019-07,official (cover says students enrolled from July 2019 onwards; filename is misleading),Member 1
 pg_regulations_2022_onwards.pdf,rules,https://iitj.ac.in/PageImages/Gallery/07-2025/Regulation_PG_2022-onwards_20022023.pdf,2022-07,official (PG students enrolled from July 2022),Member 1
 academic_calendar_2026_27.pdf,calendar,https://iitj.ac.in/PageImages/Gallery/06-2026/Academic-Calendar-AY-2026-27-639178076336417495.pdf,2026-07,official,Member 1
-academic_regulations_page.html,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,,official web page (inline regulations text; date unknown),Member 1
+academic_regulations_page.html,rules,https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations,2019-07,"official web page (regulations approved July 2019, with later updates e.g. 2025-26 branch change)",Member 1
 attendance_amendment_2024_25.pdf,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/7.1_Circular_51Circular-No.-IITJOAACircular2024-2551682-dated-08-July-2024.pdf,2024-07-08,official scan (no text layer; indexed via the .md transcription),Member 1
 attendance_amendment_2024_25.md,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/7.1_Circular_51Circular-No.-IITJOAACircular2024-2551682-dated-08-July-2024.pdf,2024-07-08,transcription of the scanned circular,Member 1
 examination_amendment_2024_25.pdf,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/7.2_Circular_52Circular-No.-IITJOAACircular2024-2552683-dated-08-July-2024.pdf,2024-07-08,official scan (no text layer; indexed via the .md transcription),Member 1
 examination_amendment_2024_25.md,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/7.2_Circular_52Circular-No.-IITJOAACircular2024-2552683-dated-08-July-2024.pdf,2024-07-08,transcription of the scanned circular,Member 1
+rules_and_regulations_for_ms.pdf,rules,https://iitj.ac.in/PageImages/Gallery/03-2025/6_2024-04-17-661f605b54457-1713332315.pdf,2023-07,"official (M.S. by Research, students enrolled from July 2023; file dated 2024-04-17)",Member 1
+curriculum_btech_cse.pdf,curriculum,https://iitj.ac.in/PageImages/Gallery/07-2025/Curriculum-BTech-CSE.pdf,2020-08,"official (B.Tech CSE curriculum structure, August 2020)",Member 1
+cse_courses_details.pdf,curriculum,https://iitj.ac.in/PageImages/Gallery/07-2025/CSE-Courses-Details.pdf,,official (CSE course syllabi; date not stated in document),Member 1

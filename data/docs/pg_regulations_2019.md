@@ -2,7 +2,7 @@
 title: IIT Jodhpur Academic Regulations (PG, M.Sc./M.Tech./Ph.D.)
 source_url: https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations
 effective_date: 2019-07
-note: Condensed/paraphrased working copy. Replace with the official PG regulations PDF (2022 onwards) for the final submission.
+note: Condensed copy of the official Academic Regulations web page (academic_regulations_page.html), kept for short section-level citations. The official PDFs and web page are also indexed.
 ---
 # 21.1 Limits on PG Registration
 M.Sc. students register for at most 24 and at least 10 credits per semester. Full-time regular/sponsored M.Tech. students register for 10 to 17 credits in a regular semester. Ph.D. full-time students register for 6 to 12 credits.

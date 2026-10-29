@@ -13,9 +13,12 @@ CITE_RULES = """
 CITATION RULES (mandatory):
 - Every factual sentence must end with a citation in the form (Source: <file name>, <section>),
   e.g. (Source: ug_regulations_2019.md, 8 Make-up Examinations) or (Source: courses.csv).
+- search_policy_documents gives each passage a ready 'citation': copy it exactly, do not invent section names.
 - Only cite documents/rows that your tools actually returned in THIS conversation.
 - Never use outside knowledge about IIT Jodhpur. Use only tool output.
 - If two documents disagree, prefer the one with the later effective_date and mention the other.
+- If a search result has a 'note' starting with CURRENT RULE, that amendment replaces the older rules:
+  answer from it, cite it, and do not present the replaced rule as valid.
 """
 
 REFUSAL_RULES = """
@@ -39,6 +42,7 @@ def _model(name: str | None = None):
 
 def _suffix(name: str | None) -> str:
     # Qwen3 has a 'thinking' mode that wastes tokens on 8B + tools; switch it off.
+    # (fallback for older Ollama versions; newer ones need reasoning_effort in _model)
     return "\n/no_think" if "qwen3" in (name or config.CHAT_MODEL).lower() else ""
 
 
@@ -119,8 +123,11 @@ def build_multi_agent(model: str | None = None) -> Agent:
             "- policy_agent: rules, regulations, attendance, exams, grading, credits, leave rules, curriculum.\n"
             "- schedule_agent: slots, venues, course codes, credits of a course, counts of courses floated.\n"
             "- email_agent: writing an e-mail/draft to an instructor, instructor contact.\n"
-            "If the question is none of these (campus facilities, food, transport, weather, general knowledge...), "
-            "call log_unanswered_question and reply starting exactly with \"I don't know\"." + REFUSAL_RULES + sfx
+            "Any question about exams, minors, majors, marks, credits, grades, leave, attendance or degree rules is "
+            "academic: transfer it to policy_agent (it searches the documents and refuses itself if nothing is found).\n"
+            "Only if the question is clearly NOT academic (campus facilities, food, transport, weather, general "
+            "knowledge...), call log_unanswered_question and reply starting exactly with \"I don't know\"."
+            + REFUSAL_RULES + sfx
         ),
         sub_agents=[policy, schedule, email],
         tools=[tools.log_unanswered_question],

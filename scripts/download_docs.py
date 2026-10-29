@@ -20,7 +20,7 @@ URLS = {
     "attendance_amendment_2024_25.pdf": "https://iitj.ac.in/PageImages/Gallery/03-2025/7.1_Circular_51Circular-No.-IITJOAACircular2024-2551682-dated-08-July-2024.pdf",
     "examination_amendment_2024_25.pdf": "https://iitj.ac.in/PageImages/Gallery/03-2025/7.2_Circular_52Circular-No.-IITJOAACircular2024-2552683-dated-08-July-2024.pdf",
     "rules_and_regulations_for_ms.pdf": "https://iitj.ac.in/PageImages/Gallery/03-2025/6_2024-04-17-661f605b54457-1713332315.pdf",
-    "curricilum_btech_cse.pdf": "https://iitj.ac.in/PageImages/Gallery/07-2025/Curriculum-BTech-CSE.pdf",
+    "curriculum_btech_cse.pdf": "https://iitj.ac.in/PageImages/Gallery/07-2025/Curriculum-BTech-CSE.pdf",
     "cse_courses_details.pdf": "https://iitj.ac.in/PageImages/Gallery/07-2025/CSE-Courses-Details.pdf",
 }
 

@@ -51,21 +51,37 @@ def _parse_front_matter(text: str) -> tuple[dict, str]:
 
 
 class _Strip(HTMLParser):
+    """HTML -> markdown-ish text: <h1>-<h6> become '# ' lines so the page splits into sections."""
+
+    HEADINGS = ("h1", "h2", "h3", "h4", "h5", "h6")
+
     def __init__(self):
         super().__init__()
         self.parts: list[str] = []
         self.skip = 0  # inside <script>/<style>
+        self.heading: list[str] | None = None
 
     def handle_starttag(self, tag, attrs):
         if tag in ("script", "style"):
             self.skip += 1
+        elif tag in self.HEADINGS:
+            self.heading = []
 
     def handle_endtag(self, tag):
         if tag in ("script", "style") and self.skip:
             self.skip -= 1
+        elif tag in self.HEADINGS and self.heading is not None:
+            title = " ".join("".join(self.heading).split())
+            if title:  # the page has many empty <h4>/<h5> spacers
+                self.parts.append(f"\n# {title}\n")
+            self.heading = None
 
     def handle_data(self, d):
-        if not self.skip:
+        if self.skip:
+            return
+        if self.heading is not None:
+            self.heading.append(d)
+        else:
             self.parts.append(d)
 
 
@@ -108,7 +124,7 @@ def load_document(path: Path) -> list[tuple[str, str, dict]]:
     if suf in (".html", ".htm"):
         p = _Strip()
         p.feed(path.read_text(encoding="utf-8", errors="ignore"))
-        return [("page", "\n".join(p.parts), meta)]
+        return [(s, t, meta) for s, t in _sections_from_text("".join(p.parts))]
     if suf == ".pdf":
         from pypdf import PdfReader
 
@@ -156,20 +172,33 @@ def ingest(docs_dir: Path = config.DOCS_DIR, reset: bool = True) -> int:
         except Exception:
             pass
     col = _collection()
+    loaded = [(path, load_document(path)) for path in sorted(docs_dir.glob("*"))]
+    # Amendments declare "supersedes: <regex>" in their front matter. Any chunk of an OLDER document
+    # matching that regex is marked superseded_by=<amendment> and is withheld at search time.
+    rules = [
+        (path.name, secs[0][2]["effective_date"], re.compile(secs[0][2]["supersedes"], re.I))
+        for path, secs in loaded
+        if secs and secs[0][2].get("supersedes")
+    ]
     ids, texts, metas = [], [], []
-    for path in sorted(docs_dir.glob("*")):
-        for section, body, meta in load_document(path):
+    for path, secs in loaded:
+        for si, (section, body, meta) in enumerate(secs):
             for n, piece in enumerate(chunk(body, config.CHUNK_CHARS, config.CHUNK_OVERLAP)):
-                ids.append(f"{path.name}:{section}:{n}")
+                # section index keeps ids unique when a document repeats a heading
+                ids.append(f"{path.name}:{si}:{section}:{n}")
                 # prepend title+section so each chunk is self-describing for the embedder
                 texts.append(f"{meta['title']} | {section}\n{piece}")
+                date = meta.get("effective_date", "")
                 metas.append(
                     {
                         "doc": path.name,
                         "title": meta["title"],
                         "section": section,
                         "source_url": meta.get("source_url", ""),
-                        "effective_date": meta.get("effective_date", ""),
+                        "effective_date": date,
+                        "superseded_by": next(
+                            (d for d, d_date, rx in rules if d != path.name and date < d_date and rx.search(piece)), ""
+                        ),
                     }
                 )
     if not ids:
@@ -188,12 +217,29 @@ def search(query: str, k: int = config.TOP_K) -> list[dict]:
     col = _collection()
     if col.count() == 0:
         return []
-    res = col.query(query_embeddings=embed([query], is_query=True), n_results=k)
-    hits = []
+    q = embed([query], is_query=True)
+    # over-fetch so that dropping superseded chunks still leaves k results
+    res = col.query(query_embeddings=q, n_results=min(col.count(), k * 3))
+    hits, replaced = [], {}  # replaced: amendment doc -> older docs whose matching chunks were withheld
     for doc, meta, dist in zip(res["documents"][0], res["metadatas"][0], res["distances"][0]):
         sim = 1.0 - dist
-        if sim >= config.MIN_SIM:
-            hits.append({**meta, "score": round(sim, 3), "text": doc})
+        if sim < config.MIN_SIM:
+            continue
+        if meta.get("superseded_by"):
+            replaced.setdefault(meta["superseded_by"], set()).add(meta["doc"])
+            continue
+        hits.append({**meta, "score": round(sim, 3), "text": doc})
+    hits = hits[:k]
+    for newer, older in replaced.items():
+        # the question hit an outdated rule: make sure the amendment that replaced it is in the results
+        if not any(h["doc"] == newer for h in hits):
+            r = col.query(query_embeddings=q, n_results=1, where={"doc": newer})
+            if r["ids"][0]:
+                hits.insert(0, {**r["metadatas"][0][0], "score": round(1.0 - r["distances"][0][0], 3),
+                                "text": r["documents"][0][0]})
+        first = next((h for h in hits if h["doc"] == newer), None)
+        if first:
+            first["replaces"] = sorted(older)
     return hits
 
 

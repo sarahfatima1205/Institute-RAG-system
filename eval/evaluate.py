@@ -5,7 +5,8 @@
   python eval/evaluate.py --compare results/a.jsonl results/b.jsonl     # what changed between models/runs
 
 Metrics
-  accuracy     in-scope: every expected regex group matches AND the agent did not refuse
+  accuracy     in-scope: every expected regex group matches, no "reject" regex matches (e.g. a withdrawn
+               rule) AND the agent did not refuse
   groundedness in-scope: answer cites "(Source: ...)" a file that (a) is an expected source and
                (b) was actually returned by a tool in that run (so citations can't be invented)
   refusal      out-of-scope / unresolvable: answer says "I don't know" AND log_unanswered_question was called
@@ -35,7 +36,11 @@ def judge(item: dict, r: dict) -> dict:
     if item.get("should_refuse"):
         ok = refused and logged
         return {"accuracy": ok, "grounded": None, "refusal_ok": ok, "refused": refused, "logged": logged}
-    correct = (not refused) and all(any(re.search(p, ans, re.I) for p in grp) for grp in item["expect"])
+    correct = (
+        (not refused)
+        and all(any(re.search(p, ans, re.I) for p in grp) for grp in item["expect"])
+        and not any(re.search(p, ans, re.I) for p in item.get("reject", []))
+    )
     returned = json.dumps(r["tool_results"], default=str).lower()
     cited = [c.lower() for c in CITE.findall(ans)]
     grounded = bool(cited) and any(

@@ -1,7 +1,8 @@
-google-adk>=1.0.0
-litellm
-ollama
-chromadb
-pypdf
-mcp            # litellm imports it on the chat path
-pytest
+# versions tested together (Python 3.12, Ollama 0.40)
+google-adk==2.13.0
+litellm==1.106.4
+ollama==0.6.3
+chromadb==1.5.9
+pypdf==6.21.3
+mcp==2.3.0           # litellm imports it on the chat path
+pytest==9.2.0

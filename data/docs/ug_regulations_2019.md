@@ -2,7 +2,7 @@
 title: IIT Jodhpur Academic Regulations (UG, students enrolled from July 2019)
 source_url: https://iitj.ac.in/Office-of-Academics/en/Academic-Regulations
 effective_date: 2019-07
-note: Condensed/paraphrased working copy for the helpdesk. Replace by the official PDF in data/docs/ for the final submission.
+note: Condensed copy of the official Academic Regulations web page (academic_regulations_page.html), kept for short section-level citations. The official PDFs and web page are also indexed.
 ---
 # 2 Academic Session
 The academic year has Semester I (fourth week of July to last week of November), Semester II (last week of December to last week of April) and a Summer Term (mid-May to mid-July). A semester has at least 70 days of instruction excluding examinations. The Academic Calendar gives exact dates for registration, add/drop, examinations, results and recesses.
