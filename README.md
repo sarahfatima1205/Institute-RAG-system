@@ -13,6 +13,8 @@ student ─► helpdesk_orchestrator ─┬─► policy_agent   : search_policy
 ```
 - `agents.build_single_agent()` = baseline (one agent, all tools); `agents.build_multi_agent()` = orchestrator version.
 - Interfaces: `main.py` (terminal chat) and `web.py` (chat page with history, same multi-agent helpdesk).
+- Retrieval re-ranks a pool of `CANDIDATES` (40) chunks by cosine similarity plus `LEX_WEIGHT` (0.25) x keyword overlap,
+  because long PDF chunks otherwise out-score the short passage that holds the answer (see `config.py`).
 - Refusals are enforced twice: a similarity threshold (`MIN_SIM`) in the RAG tool and explicit prompt rules.
 - **Newest rule wins.** Every chunk carries an `effective_date` (front matter for `.md`, `data/docs_manifest.csv`
   for PDF/HTML). An amendment declares `supersedes: <regex>` in its front matter; at index time, chunks of *older*
@@ -46,12 +48,14 @@ On CPU an answer takes ~20–120 s; the first one is slower while the model load
 
 ## Tests and evaluation
 ```bash
-EMBED_BACKEND=hash python -m pytest tests -q   # offline (no Ollama), 12 tests, uses a temp index
+EMBED_BACKEND=hash python -m pytest tests -q   # offline (no Ollama), 16 tests, uses a temp index
 python eval/evaluate.py --mode multi  --model ollama_chat/qwen3:8b    --runs 3
 python eval/evaluate.py --mode single --model ollama_chat/llama3.1:8b --runs 3
 python eval/evaluate.py --compare results/multi_qwen3-8b.jsonl results/single_llama3.1-8b.jsonl
 ```
-`eval/prompts.json` has 30 prompts (13 policy, 6 schedule, 4 e-mail, 7 out-of-scope). Each item has `expect`
+`eval/prompts.json` has 73 prompts: the 30 `core` ones (13 policy, 6 schedule, 4 e-mail, 7 out-of-scope) and 43 `extra`
+ones (paraphrases, near-domain traps, typos, mixed language, adversarial and multi-turn). Select with `--set core|extra`
+or `--ids`; the full procedure for running and reporting is in `EVAL_STEPS.md`. Each item has `expect`
 (regex groups that must all match), optional `reject` (regexes that must not match, e.g. a withdrawn rule) and
 `sources` (files an answer may cite to count as grounded). A full run (30 × 3 runs × 2 models) takes several
 hours on CPU; use `--runs 1` while tuning.

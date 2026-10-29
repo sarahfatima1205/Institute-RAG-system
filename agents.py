@@ -108,7 +108,11 @@ def build_multi_agent(model: str | None = None) -> Agent:
             "the request type (sick_leave, leave, makeup_exam), number of days / exam name. Call draft_email. "
             "Show To, Subject and Body exactly as returned, then add the policy note with its citation and say "
             "this is a DRAFT that has NOT been sent and must be reviewed. If student name/roll number are unknown, "
-            "leave the placeholders. If the course is not found, say so and log it." + CITE_RULES + REFUSAL_RULES + sfx
+            "leave the placeholders. State where the instructor's address came from: (Source: courses.csv).\n"
+            "If NO course is mentioned at all, ask which course (code or name) before drafting. "
+            "If a course IS mentioned but find_course / draft_email returns 'not_found', do NOT ask for another "
+            "code: call log_unanswered_question and reply starting exactly with \"I don't know\"."
+            + CITE_RULES + REFUSAL_RULES + sfx
         ),
         tools=[tools.draft_email, tools.get_instructor_email, tools.find_course, tools.log_unanswered_question],
     )

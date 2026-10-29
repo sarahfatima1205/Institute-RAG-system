@@ -213,13 +213,32 @@ def ingest(docs_dir: Path = config.DOCS_DIR, reset: bool = True) -> int:
     return len(ids)
 
 
+_STOP = frozenset(
+    "a an and are as at be by can do does for from get has have how i if in is it me my of on or the to "
+    "was what when which who will with would you your need many much".split()
+)
+
+
+def _terms(text: str) -> set[str]:
+    """Content words, lightly stemmed (trailing 's'), for the keyword half of the re-ranker."""
+    return {w[:-1] if len(w) > 3 and w.endswith("s") else w for w in re.findall(r"[a-z0-9]+", text.lower())} - _STOP
+
+
+def keyword_overlap(query: str, passage: str) -> float:
+    """Fraction of the query's content words that occur in the passage (0..1)."""
+    q = _terms(query)
+    return len(q & _terms(passage)) / len(q) if q else 0.0
+
+
 def search(query: str, k: int = config.TOP_K) -> list[dict]:
     col = _collection()
     if col.count() == 0:
         return []
     q = embed([query], is_query=True)
-    # over-fetch so that dropping superseded chunks still leaves k results
-    res = col.query(query_embeddings=q, n_results=min(col.count(), k * 3))
+    # Wide candidate pool: long PDF chunks often out-score the short, precise passage in embedding
+    # similarity alone (the correct passage was at rank 6-11 for several questions), so we re-rank the
+    # pool with keyword overlap and only then keep the top k.
+    res = col.query(query_embeddings=q, n_results=min(col.count(), max(k * 3, config.CANDIDATES)))
     hits, replaced = [], {}  # replaced: amendment doc -> older docs whose matching chunks were withheld
     for doc, meta, dist in zip(res["documents"][0], res["metadatas"][0], res["distances"][0]):
         sim = 1.0 - dist
@@ -228,7 +247,9 @@ def search(query: str, k: int = config.TOP_K) -> list[dict]:
         if meta.get("superseded_by"):
             replaced.setdefault(meta["superseded_by"], set()).add(meta["doc"])
             continue
-        hits.append({**meta, "score": round(sim, 3), "text": doc})
+        rank = sim + config.LEX_WEIGHT * keyword_overlap(query, f"{meta.get('section', '')} {doc}")
+        hits.append({**meta, "score": round(sim, 3), "rank_score": rank, "text": doc})
+    hits.sort(key=lambda h: h["rank_score"], reverse=True)
     hits = hits[:k]
     for newer, older in replaced.items():
         # the question hit an outdated rule: make sure the amendment that replaced it is in the results

@@ -97,7 +97,12 @@ def find_course(query: str) -> dict:
     close = difflib.get_close_matches(q, list(names), n=3, cutoff=0.6)
     if close:
         return {"status": "ok", "source": "courses.csv", "courses": [names[c] for c in close]}
-    return {"status": "not_found", "message": f"No course matching '{query}' in the timetable."}
+    return {
+        "status": "not_found",
+        "message": f"No course matching '{query}' in the timetable. Do not guess or cite anything. Call "
+                   "log_unanswered_question with the student's question, then reply starting exactly with "
+                   "\"I don't know\" and say it will be forwarded to a human.",
+    }
 
 
 def list_courses(department: str = "", level: str = "", course_type: str = "", slot: str = "") -> dict:
@@ -144,10 +149,16 @@ def get_instructor_email(course_code: str) -> dict:
                 "source": "courses.csv",
                 "course_code": r["course_code"],
                 "course_name": r["course_name"],
+                "level": r["level"],
                 "instructor": r["instructor"],
                 "instructor_email": r["instructor_email"],
             }
-    return {"status": "not_found", "message": f"Course code '{course_code}' not found."}
+    return {
+        "status": "not_found",
+        "message": f"Course code '{course_code}' not found. Do not guess or cite anything. Call "
+                   "log_unanswered_question with the student's question, then reply starting exactly with "
+                   "\"I don't know\" and say it will be forwarded to a human.",
+    }
 
 
 _TEMPLATES = {
@@ -172,11 +183,36 @@ _TEMPLATES = {
     ),
 }
 
-_POLICY_NOTES = {
-    "sick_leave": "Medical leave: up to 10 days per semester; apply to Convener DUGC with a medical certificate (Source: ug_regulations_2019.md, 15.2 Short Leave).",
-    "leave": "Non-medical leave: up to 5 days per semester with prior approval (Source: ug_regulations_2019.md, 15.2 Short Leave).",
-    "makeup_exam": "Apply to Dean (Academics) through the instructor within ten days of the missed exam, with documents (Source: ug_regulations_2019.md, 8 Make-up Examinations).",
+_REQUEST_ALIASES = {
+    "sick": "sick_leave", "sickleave": "sick_leave", "medical": "sick_leave", "medical_leave": "sick_leave",
+    "leave_of_absence": "leave", "casual_leave": "leave",
+    "makeup": "makeup_exam", "make_up": "makeup_exam", "make_up_exam": "makeup_exam",
+    "makeup_examination": "makeup_exam", "make_up_examination": "makeup_exam",
 }
+
+# The note depends on the programme: courses of level 500+ are PG (M.Sc./M.Tech./Ph.D.), below that UG.
+_PG_LEAVE = ("PG leave: at most 30 days per academic year including medical leave; M.Tech./M.Sc. not more than 10 days "
+             "at a stretch, Ph.D. not more than 15; apply to the Convener DRC "
+             "(Source: pg_regulations_2019.md, 23 Leave Rules (PG)).")
+_POLICY_NOTES = {
+    ("sick_leave", "ug"): "Medical leave: up to 10 days per semester; apply to Convener DUGC with a medical certificate (Source: ug_regulations_2019.md, 15.2 Short Leave).",
+    ("leave", "ug"): "Non-medical leave: up to 5 days per semester with prior approval (Source: ug_regulations_2019.md, 15.2 Short Leave).",
+    ("makeup_exam", "ug"): "Apply to Dean (Academics) through the instructor within ten days of the missed exam, with documents (Source: ug_regulations_2019.md, 8 Make-up Examinations).",
+    ("sick_leave", "pg"): _PG_LEAVE,
+    ("leave", "pg"): _PG_LEAVE,
+    ("makeup_exam", "pg"): "The only make-up rule in the loaded documents is the UG one: apply to Dean (Academics) through the instructor within ten days of the missed exam, with documents (Source: ug_regulations_2019.md, 8 Make-up Examinations). PG students should confirm with the Convener DRC.",
+}
+
+
+def _days_text(days: str) -> str:
+    """'2' / '2 days' -> '2 days', '1' -> '1 day', '' -> placeholder, free text ('a week') kept as is."""
+    d = days.strip()
+    if not d:
+        return "[number of days]"
+    m = re.fullmatch(r"(\d+)(?:\s*days?)?", d, re.I)
+    if m:
+        return f"{m.group(1)} day" + ("" if int(m.group(1)) == 1 else "s")
+    return d
 
 
 def draft_email(
@@ -204,16 +240,18 @@ def draft_email(
     Returns:
         dict with to, subject, body and policy_notes. Student must review before sending.
     """
+    key = re.sub(r"[\s\-]+", "_", request_type.strip().lower())
+    rt = _REQUEST_ALIASES.get(key, key)
+    if rt not in _TEMPLATES:  # never silently turn an unknown request into a leave e-mail
+        return {"status": "error",
+                "message": f"Unknown request_type '{request_type}'. Use one of: {', '.join(_TEMPLATES)}."}
     info = get_instructor_email(course_code)
     if info["status"] != "ok":
         return {"status": "not_found", "message": info["message"]}
-    rt = request_type if request_type in _TEMPLATES else "leave"
     subj, body = _TEMPLATES[rt]
-    nd = days.strip()
-    days_txt = f"{nd} day{'s' if nd not in ('', '1') else ''}" if nd else "a few days"
-    when = f" starting {start_date}" if start_date else ""
+    when = f" starting {start_date.strip()}" if start_date.strip() else ""
     fields = dict(
-        code=info["course_code"], cname=info["course_name"], days=days_txt, when=when,
+        code=info["course_code"], cname=info["course_name"], days=_days_text(days), when=when,
         exam=exam_name or "examination", reason=(reason.strip() + " ") if reason else "",
     )
     name = student_name or "[Your Name]"
@@ -228,7 +266,7 @@ def draft_email(
         "to": info["instructor_email"],
         "subject": subj.format(**fields),
         "body": text,
-        "policy_notes": _POLICY_NOTES[rt],
+        "policy_notes": _POLICY_NOTES[(rt, "pg" if int(info["level"] or 0) >= 500 else "ug")],
         "source": "courses.csv",
         "note": "DRAFT ONLY - not sent. Student must review and edit.",
     }

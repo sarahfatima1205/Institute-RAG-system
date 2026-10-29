@@ -30,6 +30,11 @@ TOP_K = int(os.getenv("TOP_K", "4"))
 # Tune this with eval/evaluate.py (it is the main out-of-scope guard).
 # nomic-embed-text on this corpus: in-scope ~0.74-0.84, off-topic ~0.51-0.69 (0.45 let everything through).
 MIN_SIM = float(os.getenv("MIN_SIM", "0.60" if EMBED_BACKEND == "ollama" else "0.12"))
+# Re-ranking: candidates fetched before keeping TOP_K, and the weight of keyword overlap added to the
+# cosine similarity (0 = pure embedding search). MIN_SIM is still applied to the raw cosine similarity.
+CANDIDATES = int(os.getenv("CANDIDATES", "40"))
+# 0.25 chosen by a sweep over 16 policy questions: correct passage in the top 4 for 10/16 at 0, 12/16 at 0.25.
+LEX_WEIGHT = float(os.getenv("LEX_WEIGHT", "0.25"))
 CHUNK_CHARS = int(os.getenv("CHUNK_CHARS", "900"))
 CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", "120"))
 COLLECTION = "iitj_docs"
