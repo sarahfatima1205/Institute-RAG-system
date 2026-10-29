@@ -1,0 +1,77 @@
+\section{Results}
+
+\subsection{Setup}
+
+\begin{tabular}{ll}
+\toprule
+Hardware & Intel Core i7-1260P (12 cores, 16 threads), 31 GB RAM, CPU only\\
+Model server & Ollama 0.40.2, 8192-token context, \code{nomic-embed-text} embeddings\\
+Configurations & Multi-agent with \code{qwen3:8b}; single agent with \code{llama3.1:8b}\\
+Prompts & 15 core prompts (4 policy, 4 timetable, 4 email, 3 out of scope), one run per configuration\\
+Index & 1090 chunks (9 superseded by the 2024 amendments)\\
+\bottomrule
+\end{tabular}
+
+\subsection{Overall metrics}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+Configuration & Accuracy & Groundedness & Correct refusal & Routing & Mean s/answer\\
+\midrule
+Multi-agent, Qwen3-8B & 15/15 (100\%) & 10/11 (91\%) & 4/4 (100\%) & 11/11 (100\%) & 70\\
+Single agent, Llama-3.1-8B & 13/15 (87\%) & 4/11 (36\%) & 4/4 (100\%) & -- & 64\\
+\bottomrule
+\end{tabular}
+\caption{Overall results. Routing applies to the multi-agent configuration only.}
+\label{tab:overall}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Category & Prompts & Multi-agent, Qwen3-8B & Single agent, Llama-3.1-8B\\
+\midrule
+Policy & 4 & 4/4 (100\%) & 3/4 (75\%)\\
+Timetable & 4 & 4/4 (100\%) & 4/4 (100\%)\\
+Email & 4 & 4/4 (100\%) & 3/4 (75\%)\\
+Out of scope & 3 & 3/3 (100\%) & 3/3 (100\%)\\
+\bottomrule
+\end{tabular}
+\caption{Accuracy by question category.}
+\label{tab:category}
+\end{table}
+
+\subsection{Figures}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig1_accuracy_by_category.png}
+\caption{Accuracy by question category (error bars: 95\% Wilson score interval).}
+\label{fig:accuracy_by_category}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig2_overall_metrics.png}
+\caption{Accuracy, groundedness and correct refusal by configuration.}
+\label{fig:overall_metrics}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig3_latency_by_category.png}
+\caption{Mean response time per answer by category (CPU).}
+\label{fig:latency_by_category}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{fig4_per_prompt.png}
+\caption{Pass/fail result per prompt for both configurations.}
+\label{fig:per_prompt}
+\end{figure}

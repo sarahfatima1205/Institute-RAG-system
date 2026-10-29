@@ -1,0 +1,10 @@
+timestamp,question,reason
+2026-10-29T22:46:09,What are the available dining options on the campus?,"The question is about campus facilities, which is not academic."
+2026-10-29T22:47:05,What are the available dining options on the campus?,This question is not about IIT Jodhpur academics
+2026-10-29T22:55:03,What is the best way to reach the campus from Jodhpur city center?,Not an academic question.
+2026-10-29T22:55:58,What is the best way to reach the campus from Jodhpur city center?,not about IIT Jodhpur academics
+2026-10-29T23:03:37,What will the weather be in Jodhpur tomorrow?,Not an academic question.
+2026-10-29T23:04:33,What will the weather be in Jodhpur tomorrow?,not about IIT Jodhpur academics
+2026-10-29T23:09:15,Write a leave email to the instructor of course XYZ9999 for 2 days.,Course code XYZ9999 not found in the timetable.
+2026-10-29T23:10:26,Write a leave email to the instructor of course XYZ9999 for 2 days.,"auto-logged: agent replied ""I don't know"" without logging"
+2026-10-29T23:10:34,What was the highest placement package last year?,Not an academic question.

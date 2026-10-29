@@ -6,6 +6,7 @@
 \usepackage{lmodern}
 \usepackage{microtype}
 \usepackage{booktabs}
+\usepackage{graphicx}
 \usepackage{longtable}
 \usepackage{enumitem}
 \usepackage{xurl}
@@ -156,13 +157,88 @@ The unit tests focus on offline retrieval and amendment handling, course lookup/
 
 \section{Results}
 
+\subsection{Setup}
+
+\begin{tabular}{ll}
+\toprule
+Hardware & Intel Core i7-1260P (12 cores, 16 threads), 31 GB RAM, CPU only\\
+Model server & Ollama 0.40.2, 8192-token context, \code{nomic-embed-text} embeddings\\
+Configurations & Multi-agent with \code{qwen3:8b}; single agent with \code{llama3.1:8b}\\
+Prompts & 15 core prompts (4 policy, 4 timetable, 4 email, 3 out of scope), one run per configuration\\
+Index & 1090 chunks (9 superseded by the 2024 amendments)\\
+\bottomrule
+\end{tabular}
+
+\subsection{Overall metrics}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccccc}
+\toprule
+Configuration & Accuracy & Groundedness & Correct refusal & Routing & Mean s/answer\\
+\midrule
+Multi-agent, Qwen3-8B & 15/15 (100\%) & 10/11 (91\%) & 4/4 (100\%) & 11/11 (100\%) & 70\\
+Single agent, Llama-3.1-8B & 13/15 (87\%) & 4/11 (36\%) & 4/4 (100\%) & -- & 64\\
+\bottomrule
+\end{tabular}
+\caption{Overall results. Routing applies to the multi-agent configuration only.}
+\label{tab:overall}
+\end{table}
+
+\begin{table}[h]
+\centering
+\small
+\begin{tabular}{lccc}
+\toprule
+Category & Prompts & Multi-agent, Qwen3-8B & Single agent, Llama-3.1-8B\\
+\midrule
+Policy & 4 & 4/4 (100\%) & 3/4 (75\%)\\
+Timetable & 4 & 4/4 (100\%) & 4/4 (100\%)\\
+Email & 4 & 4/4 (100\%) & 3/4 (75\%)\\
+Out of scope & 3 & 3/3 (100\%) & 3/3 (100\%)\\
+\bottomrule
+\end{tabular}
+\caption{Accuracy by question category.}
+\label{tab:category}
+\end{table}
+
+\subsection{Figures}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig1_accuracy_by_category.png}
+\caption{Accuracy by question category (error bars: 95\% Wilson score interval).}
+\label{fig:accuracy_by_category}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig2_overall_metrics.png}
+\caption{Accuracy, groundedness and correct refusal by configuration.}
+\label{fig:overall_metrics}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.85\textwidth]{fig3_latency_by_category.png}
+\caption{Mean response time per answer by category (CPU).}
+\label{fig:latency_by_category}
+\end{figure}
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=\textwidth]{fig4_per_prompt.png}
+\caption{Pass/fail result per prompt for both configurations.}
+\label{fig:per_prompt}
+\end{figure}
 
 \section{Current limitations and recommendations}
 
 \begin{enumerate}
   \item \textbf{Complete the source collection.} Add at least six further real, relevant documents to reach the assignment's minimum of 20, and preferably build toward 30. Track provenance and effective dates in the manifest.
   \item \textbf{Replace sample timetable data.} Use a current, verified timetable. Update prompt gold answers to match the real data and retain anonymised contact details if needed.
-  \item \textbf{Run and record the planned evaluation.} Populate the Results section with per-model and per-mode metrics, machine specifications, run counts, response times, and question-level changes across repeated runs.
+  \item \textbf{Extend the evaluation.} Run all 30 core prompts with three repeated runs per configuration, the 43 extended prompts, and the two remaining configurations (single-agent Qwen3 8B and multi-agent Llama 3.1 8B) to measure run-to-run stability.
   \item \textbf{Review citation and routing reliability.} The README notes that 8B models may occasionally paraphrase citations or route borderline questions incorrectly. Validate these behaviors using the groundedness and route metrics.
   \item \textbf{Validate policy applicability.} The corpus contains documents for different admission cohorts and programmes. The system should be evaluated to ensure answers distinguish the applicable cohort and do not blend conflicting rules.
   \item \textbf{Keep the index current.} Rebuild the vector store when indexed documents change, and periodically verify that downloaded or transcribed documents still match their official sources.
@@ -170,7 +246,7 @@ The unit tests focus on offline retrieval and amendment handling, course lookup/
 
 \section{Conclusion}
 
-The project provides a working architecture for a local, multi-agent academic helpdesk, including policy RAG, timetable tools, draft email generation, out-of-scope logging, user interfaces and an evaluation harness. The code covers the core functional shape of the assignment. The main remaining assignment gaps are the undersized document corpus, placeholder timetable/contact data, and the performance results that are to be added after evaluation.
+The project provides a working architecture for a local, multi-agent academic helpdesk, including policy RAG, timetable tools, draft email generation, out-of-scope logging, user interfaces and an evaluation harness. The code covers the core functional shape of the assignment. In the evaluation, the multi-agent Qwen3 8B configuration answered all 15 evaluated core prompts correctly with 91\% groundedness, compared with 87\% accuracy and 36\% groundedness for the single-agent Llama 3.1 8B baseline; both configurations correctly refused and logged all out-of-scope prompts. The main remaining assignment gaps are the undersized document corpus and placeholder timetable/contact data.
 
 \section{Project files referenced}
 
