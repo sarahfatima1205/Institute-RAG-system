@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]  # project root (this file is in code/)
 DOCS_DIR = ROOT / "data" / "docs"
 CSV_DIR = ROOT / "data" / "csv"
 CHROMA_DIR = ROOT / "chroma_db"

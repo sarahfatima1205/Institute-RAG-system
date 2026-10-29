@@ -30,7 +30,7 @@ import time
 from collections import defaultdict
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "code"))
 import agents  # noqa: E402
 import config  # noqa: E402
 from runtime import Helpdesk  # noqa: E402

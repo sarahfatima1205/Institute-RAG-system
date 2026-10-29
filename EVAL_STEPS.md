@@ -64,7 +64,7 @@ Expected result: `17 passed`. If any test fails, do not proceed; report the fail
 
 ## 5. Build the search index (a few minutes; requires `nomic-embed-text`)
 ```bash
-python rag.py
+python code/rag.py
 ```
 The expected output is `Indexed <N> chunks` with N around 1,090. The index must be rebuilt whenever a file in
 `data/docs` changes.
@@ -132,6 +132,6 @@ python eval/evaluate.py --compare results/multi_qwen3-8b.jsonl results/single_qw
 |---|---|
 | `ERROR: ... connection refused` in answers | Ollama is not running (step 3). |
 | `ERROR: ... model not found` | Run `ollama pull <model>` and check the `ollama_chat/` prefix. |
-| Every policy question is answered "I don't know", including P01 | The index is missing or was built with the test setting. Unset `EMBED_BACKEND` and run `python rag.py` (step 5). |
+| Every policy question is answered "I don't know", including P01 | The index is missing or was built with the test setting. Unset `EMBED_BACKEND` and run `python code/rag.py` (step 5). |
 | Very slow responses or system instability | Close other applications and run one evaluation at a time. 16 GB RAM is the minimum for an 8B model. |
 | `ModuleNotFoundError` | The virtual environment is not activated (step 2). |

@@ -1,4 +1,4 @@
-"""Serve the Academic Helpdesk chat page. Run with: python web.py"""
+"""Serve the Academic Helpdesk chat page. Run with: python code/web.py"""
 import asyncio
 import json
 import threading

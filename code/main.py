@@ -1,4 +1,4 @@
-"""CLI chat.  python main.py [--mode single|multi] [--model ollama_chat/llama3.1:8b] [--ingest]"""
+"""CLI chat.  python code/main.py [--mode single|multi] [--model ollama_chat/llama3.1:8b] [--ingest]"""
 import argparse
 import asyncio
 import uuid

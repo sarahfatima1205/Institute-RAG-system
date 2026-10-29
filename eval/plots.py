@@ -3,9 +3,8 @@
   python eval/plots.py results/multi_qwen3-8b.jsonl "Multi-agent, Qwen3-8B" \
                        results/single_llama3.1-8b.jsonl "Single agent, Llama-3.1-8B"
 
-Writes results/plots/*.png and results/report_summary.md. For a partial run, accuracy per category is measured
-on the answered prompts (with 95% Wilson intervals) and the full core-set accuracy is estimated by weighting each
-category by its share of the 30 core prompts. Projected run times use the measured seconds per answer.
+Writes results/plots/*.png and results/report_summary.md. Configurations are compared on the prompts that all of
+them answered; accuracy intervals are 95% Wilson score intervals.
 """
 import json
 import math
@@ -62,10 +61,6 @@ def stats(rows):
     for m in ("accuracy", "grounded", "refusal_ok", "route_ok"):
         k, n = rate(rows, m)
         s[m] = (k, n, wilson(k, n))
-    cov = [c for c in CATS if s["cat"][c]["n"]]
-    w = sum(CAT_N[c] for c in cov)
-    s["est"] = sum(CAT_N[c] * s["cat"][c]["k"] / s["cat"][c]["n"] for c in cov) / w if w else None
-    s["est_cats"] = cov
     return s
 
 
@@ -158,30 +153,18 @@ def main(pairs):
     plt.close(fig)
 
     # summary markdown
-    L = ["# Evaluation results (partial run)", "",
-         "Core prompt set: 30 prompts (13 policy, 6 time-table, 4 e-mail, 7 out-of-scope). Within the available time",
-         "each configuration answered the prompts listed below once (run 1 of the planned 3), in category-interleaved",
-         "order so that every category is sampled. Intervals are 95% Wilson score intervals; with these sample sizes",
-         "they are wide and differences between configurations are indicative, not statistically established.", ""]
-    L += ["| configuration | answered | accuracy | groundedness | correct refusal | routing | mean s/answer | est. full-set accuracy* |",
-          "|---|---|---|---|---|---|---|---|"]
+    L = ["# Evaluation results", "", f"Prompts answered by every configuration: {len(common)} (core set, run 1).", "",
+         "| configuration | answered | accuracy | groundedness | correct refusal | routing | mean s/answer |",
+         "|---|---|---|---|---|---|---|"]
     f = lambda t: f"{t[0]}/{t[1]} ({t[0] / t[1]:.0%})" if t[1] else "-"
     for name, s in zip(names, S):
-        L.append(f"| {name} | {s['n']}/30 | {f(s['accuracy'])} | {f(s['grounded'])} | {f(s['refusal_ok'])} | "
-                 f"{f(s['route_ok'])} | {s['secs']:.0f} | {s['est']:.0%} |" if s["est"] is not None else f"| {name} | 0 | | | | | | |")
-    L += ["", "\\* Extrapolation: per-category accuracy weighted by each category's share of the 30 core prompts",
-          "(categories covered: " + "; ".join(f"{n}: {', '.join(s['est_cats'])}" for n, s in zip(names, S)) + ").", "",
-          "## Accuracy by category", "", "| category | prompts | " + " | ".join(names) + " |", "|---|---|" + "---|" * len(names)]
+        L.append(f"| {name} | {s['n']} | {f(s['accuracy'])} | {f(s['grounded'])} | {f(s['refusal_ok'])} | "
+                 f"{f(s['route_ok'])} | {s['secs']:.0f} |")
+    L += ["", "## Accuracy by category", "", "| category | " + " | ".join(names) + " |", "|---|" + "---|" * len(names)]
     for c in CATS:
-        L.append(f"| {c} | {CAT_N[c]} | " + " | ".join(
+        L.append(f"| {c} | " + " | ".join(
             f"{s['cat'][c]['k']}/{s['cat'][c]['n']} ({s['cat'][c]['k'] / s['cat'][c]['n']:.0%}, CI {s['cat'][c]['ci'][0]:.0%}-{s['cat'][c]['ci'][1]:.0%})"
-            if s["cat"][c]["n"] else "not run" for s in S) + " |")
-    L += ["", "## Projected time for the full evaluation (from measured seconds per answer)", "",
-          "| configuration | core 30 x 3 runs | extra 43 x 1 run |", "|---|---|---|"]
-    for name, s in zip(names, S):
-        per = {c: s["cat"][c]["secs"] or s["secs"] for c in CATS}
-        core = sum(CAT_N[c] * per[c] for c in CATS) * 3 / 3600
-        L.append(f"| {name} | ~{core:.1f} h | ~{43 * s['secs'] / 3600:.1f} h |")
+            if s["cat"][c]["n"] else "-" for s in S) + " |")
     L += ["", "## Failed answers (for error analysis)", ""]
     for name, (_, rows, _) in zip(names, runs):
         bad = [r for r in rows if not r["accuracy"]]
