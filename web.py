@@ -55,12 +55,14 @@ class Handler(BaseHTTPRequestHandler):
             if not question:
                 raise ValueError("Please enter a question.")
             with self.lock:
-                if self.helpdesk is None:
+                # stored on the class: a new Handler is created per request, so self.* would rebuild
+                # the agents (and lose chat sessions) on every message
+                if Handler.helpdesk is None:
                     import agents
                     import config
                     from runtime import Helpdesk
-                    self.helpdesk = Helpdesk(agents.build_multi_agent(config.CHAT_MODEL))
-                result = asyncio.run(self.helpdesk.ask(question, str(payload.get("session") or uuid.uuid4().hex)))
+                    Handler.helpdesk = Helpdesk(agents.build_multi_agent(config.CHAT_MODEL))
+                result = asyncio.run(Handler.helpdesk.ask(question, str(payload.get("session") or uuid.uuid4().hex)))
             self._json(200, {"answer": result["answer"]})
         except Exception as exc:
             self._json(503, {"error": f"The helpdesk could not answer: {exc}"})
