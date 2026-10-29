@@ -15,13 +15,30 @@ student ─► helpdesk_orchestrator ─┬─► policy_agent   : search_policy
 Refusals are enforced twice: a similarity threshold (`MIN_SIM`) in the RAG tool and explicit prompt rules.
 
 ## Setup (16 GB laptop)
+Run these commands from the `Institute-RAG-system` project directory. Install dependencies and download the local models once:
 ```bash
 ollama pull qwen3:8b && ollama pull llama3.1:8b && ollama pull nomic-embed-text
 export OLLAMA_CONTEXT_LENGTH=8192          # default context is too small for RAG + tools
 pip install -r requirements.txt
-python scripts/download_docs.py            # run on your machine; then add the rest of the docs (checklist below)
-python rag.py                              # build the vector store
-python main.py --mode multi                # chat      (--mode single for baseline)
+```
+
+Download the source documents and build the local ChromaDB index before asking policy questions. Ingestion is a separate one-time or repeatable step; it is not run automatically when starting either interface:
+```bash
+python scripts/download_docs.py            # optional: download documents listed by the script
+python rag.py                              # ingest data/docs and build/rebuild the vector store
+```
+
+Start one interface at a time, also from the project directory:
+```bash
+python main.py --mode multi                # CLI chat using the multi-agent helpdesk
+python main.py --mode single               # CLI chat using the single-agent baseline
+python web.py                               # webpage at http://127.0.0.1:8000
+```
+
+The webpage serves the chat UI without ingesting documents. Its chat endpoint uses the same multi-agent helpdesk as the CLI, so policy answers require the vector store to have been built first. Course lookups use `data/csv/courses.csv`.
+
+Run the evaluation scripts from the project directory:
+```bash
 python eval/evaluate.py --mode multi  --model ollama_chat/qwen3:8b   --runs 3
 python eval/evaluate.py --mode single --model ollama_chat/llama3.1:8b --runs 3
 python eval/evaluate.py --compare results/multi_qwen3-8b.jsonl results/multi_llama3.1-8b.jsonl
