@@ -81,3 +81,13 @@ def test_log(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "UNANSWERED_LOG", tmp_path / "u.csv")
     tools.log_unanswered_question("dining?")
     assert "dining?" in (tmp_path / "u.csv").read_text()
+
+
+def test_refusal_is_always_logged():
+    import runtime
+    config.UNANSWERED_LOG = pathlib.Path(tempfile.mkdtemp()) / "unanswered.csv"
+    logged_by_agent = [{"tool": "log_unanswered_question"}]
+    assert runtime.ensure_logged("Slot for Quantum Mechanics?", "I don't know. It will be forwarded.", []) is True
+    assert runtime.ensure_logged("Weather?", "I don’t know.", logged_by_agent) is False  # agent already logged
+    assert runtime.ensure_logged("Slot for CSL7570?", "Slot E (Source: courses.csv)", []) is False
+    assert "Quantum Mechanics" in config.UNANSWERED_LOG.read_text() and "Weather" not in config.UNANSWERED_LOG.read_text()

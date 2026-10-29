@@ -15,7 +15,8 @@ Metrics
   accuracy     in-scope: every expected regex group matches, no "reject" regex matches AND the agent did not refuse
   groundedness in-scope: answer cites "(Source: ...)" a file that (a) is an expected source and
                (b) was actually returned by a tool in that run (so citations can't be invented)
-  refusal      out-of-scope / unresolvable: answer says "I don't know" AND log_unanswered_question was called
+  refusal      out-of-scope / unresolvable: answer says "I don't know" AND the question was logged (by the agent, or
+               by the runtime guardrail when the agent forgot: auto_logged; model_logged = the agent did it itself)
                (strict_start additionally records whether the reply STARTS with "I don't know" as the prompts demand)
   route        multi mode: the expected specialist agent(s) took part
   stability    questions whose pass/fail or answer text differ across repeated runs
@@ -44,14 +45,15 @@ DEFAULT_ROUTE = {"policy": "policy_agent", "schedule": "schedule_agent", "email"
 def judge(item: dict, r: dict, multi: bool = False) -> dict:
     ans = r["answer"]
     refused = bool(REFUSE.search(ans))
-    logged = any(c["tool"] == "log_unanswered_question" for c in r["tool_calls"])
+    model_logged = any(c["tool"] == "log_unanswered_question" for c in r["tool_calls"])
+    logged = model_logged or bool(r.get("auto_logged"))
     need = item.get("route") or DEFAULT_ROUTE.get(item["category"])
     need = [need] if isinstance(need, str) else (need or [])
     route_ok = all(a in r["agents"] for a in need) if (multi and need and not item.get("should_refuse")) else None
     if item.get("should_refuse"):
         ok = refused and logged
         return {"accuracy": ok, "grounded": None, "refusal_ok": ok, "refused": refused, "logged": logged,
-                "strict_start": bool(REFUSE_START.match(ans)), "route_ok": route_ok}
+                "model_logged": model_logged, "strict_start": bool(REFUSE_START.match(ans)), "route_ok": route_ok}
     correct = (
         (not refused)
         and all(any(re.search(p, ans, re.I) for p in grp) for grp in item["expect"])
@@ -66,13 +68,13 @@ def judge(item: dict, r: dict, multi: bool = False) -> dict:
             s.lower() in c and s.lower() in returned for c in cited for s in item["sources"]
         )
     return {"accuracy": correct, "grounded": grounded, "refusal_ok": None, "refused": refused, "logged": logged,
-            "strict_start": None, "route_ok": route_ok}
+            "model_logged": model_logged, "strict_start": None, "route_ok": route_ok}
 
 
 async def ask_item(hd: Helpdesk, item: dict) -> dict:
     """One question, or a multi-turn conversation in a single session (tool traces are merged)."""
     turns = item.get("turns") or [item["q"]]
-    merged = {"answer": "", "tool_calls": [], "tool_results": [], "agents": []}
+    merged = {"answer": "", "tool_calls": [], "tool_results": [], "agents": [], "auto_logged": False}
     sid = None
     for t in turns:
         r = await hd.ask(t, sid)
@@ -81,6 +83,7 @@ async def ask_item(hd: Helpdesk, item: dict) -> dict:
         merged["tool_calls"] += r["tool_calls"]
         merged["tool_results"] += r["tool_results"]
         merged["agents"] += [a for a in r["agents"] if a not in merged["agents"]]
+        merged["auto_logged"] = merged["auto_logged"] or r.get("auto_logged", False)
     return merged
 
 
@@ -119,7 +122,8 @@ async def run(args):
             secs = round(time.time() - t0, 1)
             j = judge(it, r, multi)
             row = {"id": it["id"], "category": it["category"], "run": k, "secs": secs, "answer": r["answer"],
-                   "agents": r["agents"], "tools": [c["tool"] for c in r["tool_calls"]], **j}
+                   "agents": r["agents"], "tools": [c["tool"] for c in r["tool_calls"]],
+                   "auto_logged": r.get("auto_logged", False), **j}
             rows.append(row)
             with open(out, "a", encoding="utf-8") as f:  # append immediately: a crash loses at most one answer
                 f.write(json.dumps(row) + "\n")
@@ -155,6 +159,9 @@ def summarize(rows, tag):
                      f"{sum(x.get('secs', 0) for x in rs) / len(rs):.0f} | {' > '.join(rs[-1]['agents'])} |")
     unstable = [q for q, rs in by_q.items()
                 if len({x["accuracy"] for x in rs}) > 1 or len({x["answer"] for x in rs}) > 1]
+    auto = [f"{r['id']} run{r['run']}" for r in rows if r.get("auto_logged")]
+    lines += ["", f"Refusals the agent did not log itself (logged by the runtime guardrail): {len(auto)}"
+              + (f" ({', '.join(auto)})" if auto else "")]
     lines += ["", "## Questions whose answers changed across runs", ""]
     lines += [f"- {q}: pass pattern {[int(x['accuracy']) for x in by_q[q]]}" for q in unstable] or ["- none"]
     md = "\n".join(lines)

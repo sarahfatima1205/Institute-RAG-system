@@ -48,8 +48,8 @@ ollama list
 curl localhost:11434/api/version        # Windows PowerShell: Invoke-RestMethod localhost:11434/api/version
 ```
 `ollama list` must show `qwen3:8b`, `llama3.1:8b` and `nomic-embed-text`, and the second command must return a
-version number. If the server is not running, start it with `ollama serve` (Linux) or launch the Ollama
-application (Windows). A missing model is installed with `ollama pull <name>`. For a remote Ollama server, set
+version number. If the server is not running, start it with `ollama serve` (Linux; for the snap package use
+`sudo snap start ollama` so the service's models are found) or launch the Ollama application (Windows). A missing model is installed with `ollama pull <name>`. For a remote Ollama server, set
 `OLLAMA_API_BASE=http://<host>:11434` beforehand.
 
 ## 4. Run the offline tests (about 2 minutes, no model required)
@@ -59,7 +59,7 @@ EMBED_BACKEND=hash python -m pytest tests -q
 # Windows PowerShell
 $env:EMBED_BACKEND="hash"; python -m pytest tests -q; Remove-Item Env:EMBED_BACKEND
 ```
-Expected result: `16 passed`. If any test fails, do not proceed; report the failure to the team.
+Expected result: `17 passed`. If any test fails, do not proceed; report the failure to the team.
 `EMBED_BACKEND` must be unset for all subsequent steps.
 
 ## 5. Build the search index (a few minutes; requires `nomic-embed-text`)
@@ -101,7 +101,7 @@ Notes:
   is slower.
 
 ## 8. Return the results
-The `results/` directory is excluded from version control. Please send the following files:
+The `results/` directory is tracked in git: commit the following files (or send them to the report team):
 ```
 results/<NAME>.jsonl              results/<NAME>_summary.md
 results/<NAME>_extra.jsonl        results/<NAME>_extra_summary.md
