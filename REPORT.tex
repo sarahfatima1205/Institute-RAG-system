@@ -5,12 +5,21 @@
 \usepackage[utf8]{inputenc}
 \usepackage{lmodern}
 \usepackage{microtype}
-\usepackage{booktabs}
+\usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{longtable}
 \usepackage{enumitem}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{setspace}
+\usepackage{siunitx}
+\usepackage{xcolor}
 \usepackage{xurl}
-\usepackage[hidelinks]{hyperref}
+\usepackage{hyperref}
+
+\onehalfspacing
 
 \setlist{nosep,leftmargin=*}
 \setlength{\parskip}{0.45em}
@@ -18,12 +27,33 @@
 \renewcommand{\arraystretch}{1.15}
 \newcommand{\code}[1]{\texttt{\detokenize{#1}}}
 
-\title{IIT Jodhpur Academic Helpdesk\\[0.4em]\large Project Report}
-\author{}
-\date{}
+\title{Autonomous Systems - CSL7650 \\ Assignment - 2 \\ \vspace{3em}   \textbf{IIT Jodhpur Academic Helpdesk: A Multi-Agent Retrieval-Augmented Assistant} \\
+    \\[8pt]
+    \large}
+
+\author{
+    \textbf{Source Code:} \href{https://github.com/sarahfatima1205/Institute-RAG-system}{https://github.com/sarahfatima1205/Institute-RAG-system} \\
+    \\[6pt]
+  \begin{tabular}{c@{\hspace{2em}}c}
+    Sarah Fatima (B23EE1093) & Sahil Narkhede (B23CS1060) \\
+    Anshit Agarwal (B23CS1087) & Namya Dhingra (B23CS1040)
+  \end{tabular}
+  \vspace{1em}
+}
+\date{October 29, 2026}
 
 \begin{document}
+
 \maketitle
+
+\vspace{2em}
+\begin{abstract}
+Students frequently need answers to questions about academic regulations, course timetables and administrative procedures, but the relevant rules are spread across regulation documents, amendment circulars and course lists, and are revised over time. This project builds a local academic helpdesk for IIT Jodhpur that answers such questions only from official documents and course data, cites its sources, and drafts (but never sends) leave and make-up examination emails to instructors. The system uses Google ADK agents served by local Ollama models: an orchestrator routes each question to a policy, schedule or email specialist, which retrieve evidence from a ChromaDB index of the regulation documents or from the course CSV. Newer amendments automatically supersede the older rules they replace, and questions that cannot be answered from the sources are refused and logged for human follow-up. The multi-agent system with Qwen3 8B is compared against a single-agent baseline with Llama 3.1 8B on core prompts covering policy, timetable, email and out-of-scope questions. The multi-agent configuration answered all 15 evaluated prompts correctly with 91\% citation groundedness, against 87\% accuracy and 36\% groundedness for the baseline, and both configurations correctly refused every out-of-scope question.
+\end{abstract}
+
+\newpage
+\tableofcontents
+\newpage
 
 \section{Project overview}
 
@@ -159,6 +189,11 @@ The unit tests focus on offline retrieval and amendment handling, course lookup/
 
 \subsection{Setup}
 
+Both configurations were evaluated on the same machine and the same prompts, one configuration computing at a time so that response times are comparable.
+
+\begin{table}[H]
+\centering
+\small
 \begin{tabular}{ll}
 \toprule
 Hardware & Intel Core i7-1260P (12 cores, 16 threads), 31 GB RAM, CPU only\\
@@ -168,10 +203,15 @@ Prompts & 15 core prompts (4 policy, 4 timetable, 4 email, 3 out of scope), one 
 Index & 1090 chunks (9 superseded by the 2024 amendments)\\
 \bottomrule
 \end{tabular}
+\caption{Evaluation setup.}
+\label{tab:setup}
+\end{table}
 
-\subsection{Overall metrics}
+\subsection{Overall performance}
 
-\begin{table}[h]
+Table~\ref{tab:overall} and Figure~\ref{fig:overall_metrics} summarise the results. The multi-agent Qwen3 8B configuration answered all 15 prompts correctly, routed every in-scope question to the expected specialist, and cited a source that its tools had actually returned in 10 of 11 in-scope answers. The single-agent Llama 3.1 8B baseline reached 87\% accuracy, but cited a valid source in only 4 of 11 answers: it frequently gave a correct answer without any citation. Both configurations refused and logged all four questions that could not be answered from the sources.
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{lccccc}
@@ -186,7 +226,18 @@ Single agent, Llama-3.1-8B & 13/15 (87\%) & 4/11 (36\%) & 4/4 (100\%) & -- & 64\
 \label{tab:overall}
 \end{table}
 
-\begin{table}[h]
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig2_overall_metrics.png}
+\caption{Accuracy, groundedness and correct refusal by configuration (error bars: 95\% Wilson score interval).}
+\label{fig:overall_metrics}
+\end{figure}
+
+\subsection{Performance by question category}
+
+Table~\ref{tab:category} and Figure~\ref{fig:accuracy_by_category} break accuracy down by category. Both configurations answered every timetable and out-of-scope prompt correctly; the differences lie in the policy and email questions, which require document retrieval or a correct course lookup before drafting.
+
+\begin{table}[H]
 \centering
 \small
 \begin{tabular}{lccc}
@@ -203,34 +254,33 @@ Out of scope & 3 & 3/3 (100\%) & 3/3 (100\%)\\
 \label{tab:category}
 \end{table}
 
-\subsection{Figures}
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=0.85\textwidth]{fig1_accuracy_by_category.png}
 \caption{Accuracy by question category (error bars: 95\% Wilson score interval).}
 \label{fig:accuracy_by_category}
 \end{figure}
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.85\textwidth]{fig2_overall_metrics.png}
-\caption{Accuracy, groundedness and correct refusal by configuration.}
-\label{fig:overall_metrics}
-\end{figure}
+Figure~\ref{fig:per_prompt} shows the result of every prompt. The baseline failed two prompts. For P02 (Open Elective credits) it retrieved a passage from the 2018 B.Tech.\ regulations and reported a 180-credit total with a derived breakdown that does not appear in the documents, instead of the 10 Open Elective credits stated in the current regulations. For E02 it drafted the make-up request without first looking up ``Autonomous Systems'', addressing the e-mail to the instructor of a different course. The multi-agent system avoids the second error because its email specialist is instructed to resolve the course before drafting.
 
-\begin{figure}[h]
-\centering
-\includegraphics[width=0.85\textwidth]{fig3_latency_by_category.png}
-\caption{Mean response time per answer by category (CPU).}
-\label{fig:latency_by_category}
-\end{figure}
-
-\begin{figure}[h]
+\begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{fig4_per_prompt.png}
 \caption{Pass/fail result per prompt for both configurations.}
 \label{fig:per_prompt}
+\end{figure}
+
+The single ungrounded answer of the multi-agent system (P04) gave the correct ten-day make-up rule but cited the PG regulations for an undergraduate question, so it does not count as grounded. The baseline's ungrounded answers were mostly correct timetable and email answers that omitted the \code{(Source: ...)} citation required by the instructions.
+
+\subsection{Response time}
+
+Figure~\ref{fig:latency_by_category} compares response times. The multi-agent system needs an extra model call for routing, which makes it slower on timetable and email questions (38~s vs.\ 18~s and 99~s vs.\ 77~s), but it is much faster on out-of-scope questions (16~s vs.\ 55~s) because the orchestrator refuses them directly without calling a specialist. Policy questions are the slowest for both configurations (113~s and 104~s), as they require retrieval and longer answers.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.85\textwidth]{fig3_latency_by_category.png}
+\caption{Mean response time per answer by category (CPU).}
+\label{fig:latency_by_category}
 \end{figure}
 
 \section{Current limitations and recommendations}
